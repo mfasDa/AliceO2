@@ -20,6 +20,7 @@
 
 class FairVolume;
 class TClonesArray;
+class TH2;
 
 namespace o2
 {
@@ -176,6 +177,11 @@ class Detector : public o2::base::DetImpl<Detector>
   Int_t mCurrentParentID;    //!<! ID of the current parent track (must be created outside EMCAL)
   Float_t mParentEnergy;     //!<! Initial energy of the parent track
   Bool_t mParentHasTrackRef; //!<! Flag whether parent track has track reference
+  // For debugging
+  Double_t mParentProdRadius;  //!<! Production radius
+  Int_t mParentProdPDG;        //!<! PDG code of the parent track
+  Double_t mParentProdEta;     //!<! production eta
+  Double_t mParentProdPhi;     //!<! production phi
 
   Double_t mSampleWidth; //!<! sample width = double(g->GetECPbRadThick()+g->GetECScintThick());
   Double_t mSmodPar0;    //!<! x size of super module
@@ -183,6 +189,16 @@ class Detector : public o2::base::DetImpl<Detector>
   Double_t mSmodPar2;    //!<! z size of super module
   Double_t mInnerEdge;   //!<! Inner edge of DCAL super module
   Double_t mParEMOD[5];  //!<! parameters of EMCAL module (TRD1,2)
+
+  // For debugging
+  TH1 *mHEnergyPrimary;
+  TH1 *mHPDGPrimary;
+  TH2 *mHPosPrimary;
+  TH2 *mHRadiusParent;
+  TH2 *mHPosParent;
+  TH2 *mHProdRadius;
+  TH2 *mHPosSoft;
+  TH2 *mHProdPDG;
 
   template <typename Det>
   friend class o2::base::DetImpl;

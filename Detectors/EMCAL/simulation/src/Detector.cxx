@@ -11,9 +11,13 @@
 #include <algorithm>
 #include <iomanip>
 
+#include "TFile.h"
 #include "TGeoManager.h"
 #include "TGeoVolume.h"
+#include "TH2.h"
 #include "TVirtualMC.h"
+#include "TVector2.h"
+#include "TVector3.h"
 
 #include "FairGeoNode.h"
 #include "FairRootManager.h"
@@ -45,11 +49,23 @@ Detector::Detector(Bool_t active)
     mCurrentParentID(-1),
     mParentEnergy(0.),
     mParentHasTrackRef(false),
+    mParentProdRadius(-1.),
+    mParentProdPDG(-1),
+    mParentProdEta(-100.),
+    mParentProdPhi(-100.),
     mSampleWidth(0.),
     mSmodPar0(0.),
     mSmodPar1(0.),
     mSmodPar2(0.),
-    mInnerEdge(0.)
+    mInnerEdge(0.),
+    mHEnergyPrimary(nullptr),
+    mHPDGPrimary(nullptr),
+    mHPosPrimary(nullptr),
+    mHRadiusParent(nullptr),
+    mHPosParent(nullptr),
+    mHProdRadius(nullptr),
+    mHPosSoft(nullptr),
+    mHProdPDG(nullptr)
 
 {
   using boost::algorithm::contains;
@@ -78,11 +94,23 @@ Detector::Detector(const Detector& rhs)
     mCurrentParentID(-1),
     mParentEnergy(0.),
     mParentHasTrackRef(false),
+    mParentProdRadius(-1.),
+    mParentProdPDG(-1),
+    mParentProdEta(-100.),
+    mParentProdPhi(-100.),
     mSampleWidth(rhs.mSampleWidth),
     mSmodPar0(rhs.mSmodPar0),
     mSmodPar1(rhs.mSmodPar1),
     mSmodPar2(rhs.mSmodPar2),
-    mInnerEdge(rhs.mInnerEdge)
+    mInnerEdge(rhs.mInnerEdge),
+    mHEnergyPrimary(nullptr),
+    mHPDGPrimary(nullptr),
+    mHPosPrimary(nullptr),
+    mHRadiusParent(nullptr),
+    mHPosParent(nullptr),
+    mHProdRadius(nullptr),
+    mHPosSoft(nullptr),
+    mHProdPDG(nullptr)
 
 {
   for (int i = 0; i < 5; ++i) {
@@ -93,6 +121,17 @@ Detector::Detector(const Detector& rhs)
 Detector::~Detector()
 {
   o2::utils::freeSimVector(mHits);
+
+  std::unique_ptr<TFile> writer(TFile::Open("EMCALdebug.root", "RECREATE"));
+  writer->cd();
+  if(mHEnergyPrimary) mHEnergyPrimary->Write();
+  if(mHPDGPrimary) mHPDGPrimary->Write();
+  if(mHPosPrimary) mHPosPrimary->Write();
+  if(mHRadiusParent) mHRadiusParent->Write();
+  if(mHPosParent) mHPosParent->Write();
+  if(mHProdRadius) mHProdRadius->Write();
+  if(mHProdPDG) mHProdPDG->Write();
+  if(mHPosSoft) mHPosSoft->Write();
 }
 
 void Detector::InitializeO2Detector()
@@ -103,6 +142,23 @@ void Detector::InitializeO2Detector()
     AddSensitiveVolume(vsense);
   else
     LOG(ERROR) << "EMCAL Sensitive volume SCMX not found ... No hit creation!";
+
+  mHEnergyPrimary = new TH1F("hEnergyPrimary", "energy of the primary particle", 2500, 0., 250.);
+  mHEnergyPrimary->SetDirectory(nullptr);
+  mHPDGPrimary = new TH1F("hPdgPrimary", "Primary PDG code", 200, -100., 100.);
+  mHPDGPrimary->SetDirectory(nullptr);
+  mHPosPrimary = new TH2F("hPositionPrimary", "Position of the primary particle; #eta; #phi",100, -0.9, 0.9, 1000, 0, 2*TMath::Pi());
+  mHPosPrimary->SetDirectory(nullptr);
+  mHRadiusParent = new TH2F("hRadiusParent", "Parent radius", 2500, 0., 250., 5000, 0., 500.);
+  mHRadiusParent->SetDirectory(nullptr);
+  mHPosParent = new TH2F("hPosParent", "Parent position; #eta; #phi", 100, -0.9, 0.9, 1000, 0, 2*TMath::Pi());
+  mHPosParent->SetDirectory(nullptr);
+  mHProdRadius = new TH2F("hProdRadius", "Production radius", 2500, 0., 250., 5000, 0., 500.);
+  mHProdRadius->SetDirectory(nullptr);
+  mHProdPDG = new TH2F("hProdPDG", "Prod PDG", 2500, 0., 250., 200, -100., 100.);
+  mHProdPDG->SetDirectory(nullptr);
+  mHPosSoft = new TH2F("hPosSoft", "; #eta; #phi", 100, -0.9, 0.9, 1000, 0, 2*TMath::Pi());
+  mHPosSoft->SetDirectory(nullptr);
 }
 
 void Detector::EndOfEvent() { Reset(); }
@@ -216,6 +272,10 @@ Bool_t Detector::ProcessHits(FairVolume* v)
     /// check handling of primary particles
     AddHit(mCurrentParentID, mCurrentPrimaryID, mParentEnergy, detID, Point3D<float>(posX, posY, posZ),
            Vector3D<float>(momX, momY, momZ), time, lightyield);
+    mHProdRadius->Fill(mParentEnergy, mParentProdRadius);
+    mHProdPDG->Fill(mParentEnergy, mParentProdPDG);
+    if(mParentEnergy < 1.) mHPosSoft->Fill(mParentProdEta, mParentProdPhi);
+    
     o2stack->addHit(GetDetId());
   } else {
     LOG(DEBUG4) << "Adding energy to the current hit" << std::endl;
@@ -884,6 +944,15 @@ void Detector::BeginPrimary()
   mParentEnergy = fMC->GetStack()->GetCurrentTrack()->Energy();
   mParentHasTrackRef = false;
   LOG(DEBUG) << "Starting primary " << mCurrentPrimaryID << " with energy " << fMC->GetStack()->GetCurrentTrack()->Energy();
+  auto current = fMC->GetStack()->GetCurrentTrack();
+  mParentProdRadius = TMath::Sqrt(current->Vx() * current->Vx() + current->Vy() * current->Vy());
+  mParentProdPDG = current->GetPdgCode();
+  TVector3 vec(current->Vx(), current->Vy(), current->Vz());
+  mParentProdEta = vec.Eta();
+  mParentProdPhi = TVector2::Phi_0_2pi(vec.Phi());
+  mHEnergyPrimary->Fill(mParentEnergy);
+  mHPosPrimary->Fill(fMC->GetStack()->GetCurrentTrack()->Eta(), fMC->GetStack()->GetCurrentTrack()->Phi());
+  mHPDGPrimary->Fill(fMC->GetStack()->GetCurrentTrack()->GetPdgCode());
 }
 
 void Detector::PreTrack()
@@ -891,6 +960,9 @@ void Detector::PreTrack()
   auto currenttrack = fMC->GetStack()->GetCurrentTrackNumber();
   LOG(DEBUG) << "Starting new track " << currenttrack << std::endl;
   auto current = fMC->GetStack()->GetCurrentTrack();
+  TVector3 cvec(current->Vx(), current->Vy(), current->Vz());
+  mHRadiusParent->Fill(current->Energy(), cvec.Perp());
+  mHPosParent->Fill(cvec.Eta(), TVector2::Phi_0_2pi(cvec.Phi()));
   // check if produced outside EMCAL - if yes set as current parent
   Point3D<double> prodvertex{current->Vx(), current->Vy(), current->Vz()};
   if (mGeometry->IsInEMCALOrDCAL(prodvertex) == AcceptanceType_t::NON_ACCEPTANCE) {
@@ -899,6 +971,11 @@ void Detector::PreTrack()
     mCurrentParentID = currenttrack;
     mParentEnergy = current->Energy();
     mParentHasTrackRef = false;
+    mParentProdRadius = TMath::Sqrt(current->Vx() * current->Vx() + current->Vy() * current->Vy());
+    mParentProdPDG = current->GetPdgCode();
+    TVector3 vec(current->Vx(), current->Vy(), current->Vz());
+    mParentProdEta = vec.Eta();
+    mParentProdPhi = TVector2::Phi_0_2pi(vec.Phi());
   }
 }
 
@@ -909,4 +986,8 @@ void Detector::FinishPrimary()
   mCurrentPrimaryID = -1;
   mCurrentParentID = -1;
   mParentHasTrackRef = false;
+  mParentProdRadius = -1.;
+  mParentProdPDG = -1.;
+  mParentProdEta = -100.;
+  mParentProdPhi = -100.;
 }
