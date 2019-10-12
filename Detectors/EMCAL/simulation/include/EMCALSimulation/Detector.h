@@ -16,6 +16,7 @@
 #include "MathUtils/Cartesian3D.h"
 #include "RStringView.h"
 #include "Rtypes.h"
+#include <map>
 #include <vector>
 
 class FairVolume;
@@ -128,6 +129,8 @@ class Detector : public o2::base::DetImpl<Detector>
   /// Reset caches for current primary, current parent and current cell
   void FinishPrimary() override;
 
+  void FinishEvent() override;
+
  protected:
   /// \brief Creating detector materials for the EMCAL detector and space frame
   void CreateMaterials();
@@ -161,6 +164,8 @@ class Detector : public o2::base::DetImpl<Detector>
   /// \param parentID ID of the parent track
   Hit* FindHit(Int_t cellID, Int_t parentID);
 
+  int FindRecursiveParent(int track);
+
  private:
   /// \brief Copy constructor (used in MT)
   Detector(const Detector& rhs);
@@ -169,19 +174,21 @@ class Detector : public o2::base::DetImpl<Detector>
   Double_t mBirkC1; ///< Birk parameter C1
   Double_t mBirkC2; ///< Birk parameter C2
 
-  std::vector<Hit>* mHits; //!<! Collection of EMCAL hits
-  Geometry* mGeometry;     //!<! Geometry pointer
+  std::vector<Hit>* mHits;         //!<! Collection of EMCAL hits
+  Geometry* mGeometry;             //!<! Geometry pointer
+  std::map<int, int> mDecayChains; //!<! Decay history
 
   // Worker variables during hit creation
+  Int_t mCurrentTrack;       //!<! Current track
   Int_t mCurrentPrimaryID;   //!<! ID of the current primary
   Int_t mCurrentParentID;    //!<! ID of the current parent track (must be created outside EMCAL)
   Float_t mParentEnergy;     //!<! Initial energy of the parent track
   Bool_t mParentHasTrackRef; //!<! Flag whether parent track has track reference
   // For debugging
-  Double_t mParentProdRadius;  //!<! Production radius
-  Int_t mParentProdPDG;        //!<! PDG code of the parent track
-  Double_t mParentProdEta;     //!<! production eta
-  Double_t mParentProdPhi;     //!<! production phi
+  Double_t mParentProdRadius; //!<! Production radius
+  Int_t mParentProdPDG;       //!<! PDG code of the parent track
+  Double_t mParentProdEta;    //!<! production eta
+  Double_t mParentProdPhi;    //!<! production phi
 
   Double_t mSampleWidth; //!<! sample width = double(g->GetECPbRadThick()+g->GetECScintThick());
   Double_t mSmodPar0;    //!<! x size of super module
@@ -191,14 +198,14 @@ class Detector : public o2::base::DetImpl<Detector>
   Double_t mParEMOD[5];  //!<! parameters of EMCAL module (TRD1,2)
 
   // For debugging
-  TH1 *mHEnergyPrimary;
-  TH1 *mHPDGPrimary;
-  TH2 *mHPosPrimary;
-  TH2 *mHRadiusParent;
-  TH2 *mHPosParent;
-  TH2 *mHProdRadius;
-  TH2 *mHPosSoft;
-  TH2 *mHProdPDG;
+  TH1* mHEnergyPrimary; //!<!
+  TH1* mHPDGPrimary;    //!<!
+  TH2* mHPosPrimary;    //!<!
+  TH2* mHRadiusParent;  //!<!
+  TH2* mHPosParent;     //!<!
+  TH2* mHProdRadius;    //!<!
+  TH2* mHPosSoft;       //!<!
+  TH2* mHProdPDG;       //!<!
 
   template <typename Det>
   friend class o2::base::DetImpl;
