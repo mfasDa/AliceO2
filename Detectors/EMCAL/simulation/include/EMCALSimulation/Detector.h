@@ -16,8 +16,8 @@
 #include "MathUtils/Cartesian3D.h"
 #include "RStringView.h"
 #include "Rtypes.h"
-#include <map>
 #include <vector>
+#include <unordered_map>
 
 class FairVolume;
 class TClonesArray;
@@ -30,9 +30,17 @@ namespace emcal
 class Hit;
 class Geometry;
 
-///
+/// \struct Parent
+/// \brief Information about superparent (particle entering EMCAL)
+struct Parent {
+  int mPDG;                ///< PDG code
+  double mEnergy;          ///< Total energy
+  bool mHasTrackReference; ///< Flag indicating whether parent has a track reference
+  Point3D<float> mVertex;  ///< Production vertex
+};
+
 /// \class Detector
-/// \bief Detector class for the EMCAL detector
+/// \brief Detector simulation class for the EMCAL detector
 ///
 /// The detector class handles the implementation of the EMCAL detector
 /// within the virtual Monte-Carlo framework and the simulation of the
@@ -47,9 +55,7 @@ class Detector : public o2::base::DetImpl<Detector>
          ID_STEEL = 4,
          ID_PAPER = 5 };
 
-  ///
-  /// Default constructor
-  ///
+  /// \brief Default constructor
   Detector() = default;
 
   /// \brief Main constructor
@@ -64,9 +70,7 @@ class Detector : public o2::base::DetImpl<Detector>
   /// \brief Initializing detector
   void InitializeO2Detector() override;
 
-  ///
-  /// Processing hit creation in the EMCAL scintillator volume
-  ///
+  /// \brief Processing hit creation in the EMCAL scintillator volume
   /// \param[in] v Current sensitive volume
   Bool_t ProcessHits(FairVolume* v = nullptr) final;
 
@@ -84,6 +88,8 @@ class Detector : public o2::base::DetImpl<Detector>
   /// Internally adding hits coming from the same track
   Hit* AddHit(Int_t trackID, Int_t primary, Double_t initialEnergy, Int_t detID,
               const Point3D<float>& pos, const Vector3D<float>& mom, Double_t time, Double_t energyloss);
+
+  Parent* AddSuperparent(Int_t trackID, Int_t pdg, Double_t energy, const Point3D<float>& prodvertex);
 
   /// \brief register container with hits
   void Register() override;
@@ -129,8 +135,6 @@ class Detector : public o2::base::DetImpl<Detector>
   /// Reset caches for current primary, current parent and current cell
   void FinishPrimary() override;
 
-  void FinishEvent() override;
-
  protected:
   /// \brief Creating detector materials for the EMCAL detector and space frame
   void CreateMaterials();
@@ -152,7 +156,7 @@ class Detector : public o2::base::DetImpl<Detector>
   /// \brief Generate aluminium plates geometry
   void CreateAlFrontPlate(const std::string_view mother = "EMOD", const std::string_view child = "ALFP");
 
-  /// Calculate the amount of light seen by the APD for a given track segment (charged particles only) according to Bricks law
+  /// \brief Calculate the amount of light seen by the APD for a given track segment (charged particles only) according to Bricks law
   /// \param[in] energydeposit Energy deposited by a charged particle in the track segment
   /// \param[in] tracklength Length of the track segment
   /// \param[in] charge Track charge (in units of elementary charge)
@@ -174,21 +178,17 @@ class Detector : public o2::base::DetImpl<Detector>
   Double_t mBirkC1; ///< Birk parameter C1
   Double_t mBirkC2; ///< Birk parameter C2
 
-  std::vector<Hit>* mHits;         //!<! Collection of EMCAL hits
-  Geometry* mGeometry;             //!<! Geometry pointer
-  std::map<int, int> mDecayChains; //!<! Decay history
+  std::vector<std::string> mSensitive;           //!<! List of sensitive volumes
+  std::vector<Hit>* mHits;                       //!<! Collection of EMCAL hits
+  Geometry* mGeometry;                           //!<! Geometry pointer
+  std::unordered_map<int, int> mDecayChains;     //!<! Decay history
+  std::unordered_map<int, Parent> mSuperParents; //!<! Super parent kine info
+  Parent* mCurrentSuperparent;                   //!<! Pointer to the current superparent
 
   // Worker variables during hit creation
-  Int_t mCurrentTrack;       //!<! Current track
-  Int_t mCurrentPrimaryID;   //!<! ID of the current primary
-  Int_t mCurrentParentID;    //!<! ID of the current parent track (must be created outside EMCAL)
-  Float_t mParentEnergy;     //!<! Initial energy of the parent track
-  Bool_t mParentHasTrackRef; //!<! Flag whether parent track has track reference
-  // For debugging
-  Double_t mParentProdRadius; //!<! Production radius
-  Int_t mParentProdPDG;       //!<! PDG code of the parent track
-  Double_t mParentProdEta;    //!<! production eta
-  Double_t mParentProdPhi;    //!<! production phi
+  Int_t mCurrentTrack;     //!<! Current track
+  Int_t mCurrentPrimaryID; //!<! ID of the current primary
+  Int_t mCurrentParentID;  //!<! ID of the current parent
 
   Double_t mSampleWidth; //!<! sample width = double(g->GetECPbRadThick()+g->GetECScintThick());
   Double_t mSmodPar0;    //!<! x size of super module
