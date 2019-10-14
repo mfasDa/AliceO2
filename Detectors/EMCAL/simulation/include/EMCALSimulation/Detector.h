@@ -178,12 +178,12 @@ class Detector : public o2::base::DetImpl<Detector>
   Double_t mBirkC1; ///< Birk parameter C1
   Double_t mBirkC2; ///< Birk parameter C2
 
-  std::vector<std::string> mSensitive;           //!<! List of sensitive volumes
-  std::vector<Hit>* mHits;                       //!<! Collection of EMCAL hits
-  Geometry* mGeometry;                           //!<! Geometry pointer
-  std::unordered_map<int, int> mDecayChains;     //!<! Decay history
-  std::unordered_map<int, Parent> mSuperParents; //!<! Super parent kine info
-  Parent* mCurrentSuperparent;                   //!<! Pointer to the current superparent
+  std::vector<std::string> mSensitive;               //!<! List of sensitive volumes
+  std::vector<Hit>* mHits;                           //!<! Collection of EMCAL hits
+  Geometry* mGeometry;                               //!<! Geometry pointer
+  std::unordered_map<int, int> mSuperParentsIndices; //!<! Super parent indices (track index - superparent index)
+  std::unordered_map<int, Parent> mSuperParents;     //!<! Super parent kine info (superparent index - superparent object)
+  Parent* mCurrentSuperparent;                       //!<! Pointer to the current superparent
 
   // Worker variables during hit creation
   Int_t mCurrentTrack;     //!<! Current track

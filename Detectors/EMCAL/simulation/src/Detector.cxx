@@ -46,7 +46,7 @@ Detector::Detector(Bool_t active)
     mSensitive(),
     mHits(o2::utils::createSimVector<Hit>()),
     mGeometry(nullptr),
-    mDecayChains(),
+    mSuperParentsIndices(),
     mSuperParents(),
     mCurrentSuperparent(nullptr),
     mCurrentTrack(-1),
@@ -90,7 +90,7 @@ Detector::Detector(const Detector& rhs)
     mSensitive(),
     mHits(o2::utils::createSimVector<Hit>()),
     mGeometry(rhs.mGeometry),
-    mDecayChains(),
+    mSuperParentsIndices(),
     mSuperParents(),
     mCurrentSuperparent(nullptr),
     mCurrentTrack(-1),
@@ -207,10 +207,11 @@ Bool_t Detector::ProcessHits(FairVolume* v)
   if (track != mCurrentTrack) {
     LOG(DEBUG4) << "Doing new track " << track << " current (" << mCurrentTrack << "), direct parent (" << directparent << ")" << std::endl;
     // new current track - check parentage
-    auto hasparent = mDecayChains.find(directparent);
-    if (hasparent != mDecayChains.end()) {
-      mDecayChains[track] = directparent;
-      mCurrentParentID = FindRecursiveParent(track);
+    auto hasSuperParent = mSuperParentsIndices.find(directparent);
+    if (hasSuperParent != mSuperParentsIndices.end()) {
+      // same superparent as direct parent
+      mCurrentParentID = hasSuperParent->second;
+      mSuperParentsIndices[track] = hasSuperParent->second;
       auto superparent = mSuperParents.find(mCurrentParentID);
       if (superparent != mSuperParents.end()) {
         mCurrentSuperparent = &(superparent->second);
@@ -221,7 +222,8 @@ Bool_t Detector::ProcessHits(FairVolume* v)
       LOG(DEBUG4) << "Found superparent " << mCurrentParentID << std::endl;
     } else {
       // start of new chain
-      mDecayChains[track] = -1;
+      // for new incoming tracks the super parent index is equal to the track ID (for recursion)
+      mSuperParentsIndices[track] = track;
       auto particle = fMC->GetStack()->GetCurrentTrack();
       mCurrentSuperparent = AddSuperparent(track, fMC->TrackPid(), fMC->Etot(), {particle->Vx(), particle->Vy(), particle->Vz()});
       mCurrentParentID = track;
@@ -386,19 +388,6 @@ Hit* Detector::FindHit(int cellID, int parentID)
   return &(*result);
 }
 
-int Detector::FindRecursiveParent(int track)
-{
-  auto found = mDecayChains.find(track);
-  if (found != mDecayChains.end()) {
-    if (found->second != -1) {
-      return FindRecursiveParent(found->second);
-    } else {
-      return found->first;
-    }
-  }
-  return -1;
-}
-
 void Detector::Register()
 {
   FairRootManager::Instance()->RegisterAny(addNameTo("Hit").data(), mHits, kTRUE);
@@ -410,7 +399,7 @@ void Detector::Reset()
   if (!o2::utils::ShmManager::Instance().isOperational()) {
     mHits->clear();
   }
-  mDecayChains.clear();
+  mSuperParentsIndices.clear();
   mSuperParents.clear();
   mCurrentTrack = -1;
   mCurrentParentID = -1;
