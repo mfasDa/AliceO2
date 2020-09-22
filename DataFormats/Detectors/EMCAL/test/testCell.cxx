@@ -34,18 +34,19 @@ BOOST_AUTO_TEST_CASE(Cell_test)
     BOOST_CHECK_EQUAL(c.getTower(), j);
     BOOST_CHECK_EQUAL(c.getTimeStamp(), 0);
     BOOST_CHECK_EQUAL(c.getEnergy(), 0);
-    BOOST_CHECK_EQUAL(c.getLowGain(), true);
+    BOOST_CHECK_EQUAL(c.getHighGain(), true);
   }
 
   c.setTower(0);
-  std::vector<int> times = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 50, 100, 200};
+  // Test time over the full range
+  std::vector<int> times = {-1000, -500, -200, -100, -50, -20, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 50, 100, 200, 500, 1000};
 
   for (auto t : times) {
     c.setTimeStamp(t);
     BOOST_CHECK_EQUAL(c.getTower(), 0);
     BOOST_CHECK_EQUAL(c.getTimeStamp(), t);
     BOOST_CHECK_EQUAL(c.getEnergy(), 0);
-    BOOST_CHECK_EQUAL(c.getLowGain(), true);
+    BOOST_CHECK_EQUAL(c.getHighGain(), true);
   }
 
   c.setTimeStamp(0);
@@ -53,10 +54,15 @@ BOOST_AUTO_TEST_CASE(Cell_test)
 
   for (auto e : energies) {
     c.setEnergy(e);
+    if (e > 16)
+      c.setLowGain();
     BOOST_CHECK_EQUAL(c.getTower(), 0);
     BOOST_CHECK_EQUAL(c.getTimeStamp(), 0);
     BOOST_CHECK_SMALL(e - c.getEnergy(), 0.02); // Require 20 MeV resolution
-    BOOST_CHECK_EQUAL(c.getLowGain(), true);
+    if (e > 16)
+      BOOST_CHECK_EQUAL(c.getLowGain(), true);
+    else
+      BOOST_CHECK_EQUAL(c.getHighGain(), true);
   }
 
   c.setEnergy(0);
@@ -65,8 +71,8 @@ BOOST_AUTO_TEST_CASE(Cell_test)
   BOOST_CHECK_EQUAL(c.getTower(), 0);
   BOOST_CHECK_EQUAL(c.getTimeStamp(), 0);
   BOOST_CHECK_EQUAL(c.getEnergy(), 0);
-  BOOST_CHECK_EQUAL(c.getLowGain(), true);
   BOOST_CHECK_EQUAL(c.getHighGain(), false);
+  BOOST_CHECK_EQUAL(c.getLowGain(), true);
   BOOST_CHECK_EQUAL(c.getLEDMon(), false);
   BOOST_CHECK_EQUAL(c.getTRU(), false);
 
@@ -74,8 +80,8 @@ BOOST_AUTO_TEST_CASE(Cell_test)
   BOOST_CHECK_EQUAL(c.getTower(), 0);
   BOOST_CHECK_EQUAL(c.getTimeStamp(), 0);
   BOOST_CHECK_EQUAL(c.getEnergy(), 0);
-  BOOST_CHECK_EQUAL(c.getLowGain(), false);
   BOOST_CHECK_EQUAL(c.getHighGain(), true);
+  BOOST_CHECK_EQUAL(c.getLowGain(), false);
   BOOST_CHECK_EQUAL(c.getLEDMon(), false);
   BOOST_CHECK_EQUAL(c.getTRU(), false);
 
