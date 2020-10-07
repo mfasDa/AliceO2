@@ -15,14 +15,17 @@
 
 using namespace o2::emcal;
 
+
+const double ENERGY_TRUNCATION = 0.0153;
+
 Cell::Cell()
 {
-  auto tmp = reinterpret_cast<uint16_t*>(&mCellWord);
-  tmp[0] = tmp[1] = tmp[2] = 0;
+  memset(mCellWords, 0, sizeof(uint16_t) * 3);
 }
 
 Cell::Cell(Short_t tower, Double_t energy, Double_t time, ChannelType_t ctype)
 {
+  memset(mCellWords, 0, sizeof(uint16_t) * 3);
   setTower(tower);
   setTimeStamp(time);
   setEnergy(energy);
@@ -38,12 +41,12 @@ void Cell::setTimeStamp(Short_t timestamp)
     timestamp = TIME_MIN;
   else if (timestamp > TIME_MAX)
     timestamp = TIME_MAX;
-  mCellWord.mTime = timestamp;
+  getDataRepresentation()->mTime = timestamp;
 }
 
 Short_t Cell::getTimeStamp() const
 {
-  return mCellWord.mTime;
+  return getDataRepresentation()->mTime;
 }
 
 void Cell::setEnergy(Double_t energy)
@@ -54,12 +57,14 @@ void Cell::setEnergy(Double_t energy)
   } else if (truncatedEnergy > 250.) {
     truncatedEnergy = 250.;
   }
-  mCellWord.mEnergy = static_cast<uint16_t>(truncatedEnergy / 0.0153);
+  auto convertedEnergy = static_cast<int16_t>(truncatedEnergy / ENERGY_TRUNCATION);
+  getDataRepresentation()->mEnergy = convertedEnergy;
 }
 
 Double_t Cell::getEnergy() const
 {
-  return static_cast<double>(mCellWord.mEnergy) * 0.0153;
+  auto convertedEnergy = static_cast<double>(getDataRepresentation()->mEnergy) * ENERGY_TRUNCATION;
+  return convertedEnergy;
 }
 
 void Cell::PrintStream(std::ostream& stream) const

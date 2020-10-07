@@ -62,8 +62,8 @@ class Cell
   Cell(Short_t tower, Double_t energy, Double_t time, ChannelType_t ctype = ChannelType_t::LOW_GAIN);
   ~Cell() = default; // override
 
-  void setTower(Short_t tower) { mCellWord.mTowerID = tower; }
-  Short_t getTower() const { return mCellWord.mTowerID; }
+  void setTower(Short_t tower) { getDataRepresentation()->mTowerID = tower; }
+  Short_t getTower() const { return getDataRepresentation()->mTowerID; }
 
   /// \brief Set the time stamp
   /// \param time Time in ns
@@ -115,11 +115,11 @@ class Cell
 
   /// \brief Set the type of the cell
   /// \param ctype Type of the cell (HIGH_GAIN, LOW_GAIN, LEDMON, TRU)
-  void setType(ChannelType_t ctype) { mCellWord.mCellStatus = static_cast<uint16_t>(ctype); }
+  void setType(ChannelType_t ctype) { getDataRepresentation()->mCellStatus = static_cast<uint16_t>(ctype); }
 
   /// \brief Get the type of the cell
   /// \return Type of the cell (HIGH_GAIN, LOW_GAIN, LEDMON, TRU)
-  ChannelType_t getType() const { return static_cast<ChannelType_t>(mCellWord.mCellStatus); }
+  ChannelType_t getType() const { return static_cast<ChannelType_t>(getDataRepresentation()->mCellStatus); }
 
   /// \brief Check whether the cell is of a given type
   /// \param ctype Type of the cell (HIGH_GAIN, LOW_GAIN, LEDMON, TRU)
@@ -157,13 +157,18 @@ class Cell
   void PrintStream(std::ostream& stream) const;
 
  private:
-  struct __attribute__((packed)) {
+  struct __attribute__((packed)) CellData {
     uint16_t mTowerID : 15;   ///< bits 0-14   Tower ID
     int16_t mTime : 11;       ///< bits 15-25: Time (signed, can become negative after calibration)
     uint16_t mEnergy : 14;    ///< bits 26-39: Energy
     uint16_t mCellStatus : 2; ///< bits 40-41: Cell status
     uint16_t mZerod : 6;      ///< bits 42-47: Zerod
-  } mCellWord;                ///< Data word
+  };
+
+  CellData *getDataRepresentation() { return reinterpret_cast<CellData *>(mCellWords); }
+  const CellData *getDataRepresentation() const { return reinterpret_cast<const CellData *>(mCellWords); }
+
+  uint16_t mCellWords[3];     ///< data word
 
   ClassDefNV(Cell, 1);
 };
