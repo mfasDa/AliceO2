@@ -15,7 +15,6 @@
 
 using namespace o2::emcal;
 
-
 const float TIME_SHIFT = 600.,
             TIME_RANGE = 1500.,
             TIME_RESOLUTION = TIME_RANGE / 2047.,
@@ -50,7 +49,7 @@ void Cell::setTimeStamp(float timestamp)
 
 float Cell::getTimeStamp() const
 {
-  return (static_cast<float>(getDataRepresentation()->mTime) * TIME_RESOLUTION) - TIME_SHIFT ;
+  return (static_cast<float>(getDataRepresentation()->mTime) * TIME_RESOLUTION) - TIME_SHIFT;
 }
 
 void Cell::setEnergy(float energy)
