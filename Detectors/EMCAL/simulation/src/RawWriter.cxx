@@ -127,16 +127,17 @@ bool RawWriter::processTrigger(const o2::emcal::TriggerRecord& trg)
           rawbunches.push_back(adc);
         }
       }
-      if(!rawbunches.size()) continue;
+      if (!rawbunches.size())
+        continue;
       auto encodedbunches = encodeBunchData(rawbunches);
       auto chanhead = createChannelHeader(hwaddress, rawbunches.size(), false); /// bad channel status eventually to be added later
       char* chanheadwords = reinterpret_cast<char*>(&chanhead);
-      uint32_t *testheader = reinterpret_cast<uint32_t *> (chanheadwords);
-      if((*testheader >> 30) & 1) {
+      uint32_t* testheader = reinterpret_cast<uint32_t*>(chanheadwords);
+      if ((*testheader >> 30) & 1) {
         // header pattern found, check that the payload size is properly reflecting the number of words
         uint32_t payloadsizeRead = ((*testheader >> 16) & 0x3FF);
-        uint32_t nwordsRead = (payloadsizeRead+2)/3;
-        if(encodedbunches.size() != nwordsRead) {
+        uint32_t nwordsRead = (payloadsizeRead + 2) / 3;
+        if (encodedbunches.size() != nwordsRead) {
           LOG(ERROR) << "Mismatch in number of 32-bit words, encoded " << encodedbunches.size() << ", recalculated " << nwordsRead << std::endl;
           LOG(ERROR) << "Payload size: " << payloadsizeRead << ", number of words: " << rawbunches.size() << ", encodeed words " << encodedbunches.size() << ", calculated words " << nwordsRead << std::endl;
         }
@@ -152,7 +153,8 @@ bool RawWriter::processTrigger(const o2::emcal::TriggerRecord& trg)
       }
     }
 
-    if(!payload.size()) continue;
+    if (!payload.size())
+      continue;
 
     // Create RCU trailer
     auto trailerwords = createRCUTrailer(payload.size() / 4, 16, 16, 100., 0.);
@@ -260,9 +262,9 @@ std::vector<int> RawWriter::encodeBunchData(const std::vector<int>& data)
       encoded.push_back(currentword.mDataWord);
       currentword.mDataWord = 0;
       wordnumber = 0;
-    } 
+    }
   }
-  if(wordnumber) {
+  if (wordnumber) {
     encoded.push_back(currentword.mDataWord);
   }
   return encoded;
