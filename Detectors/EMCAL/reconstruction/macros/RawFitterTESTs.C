@@ -102,7 +102,7 @@ void RawFitterTESTs(const char* filename = "")
 
             // print the fit output
             std::cout << "The Time is : " << fitResults.getTime() << " And the Amplitude is : " << fitResults.getAmp() << std::endl;
-          } catch (o2::emcal::CaloRawFitter::RawFitterError_t &fiterror) {
+          } catch (o2::emcal::CaloRawFitter::RawFitterError_t& fiterror) {
             std::cerr << "Error processing raw fit: " << o2::emcal::CaloRawFitter::createErrorMessage(fiterror) << std::endl;
           }
         }

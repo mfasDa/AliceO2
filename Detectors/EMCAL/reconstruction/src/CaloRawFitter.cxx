@@ -39,17 +39,17 @@ std::string CaloRawFitter::createErrorMessage(CaloRawFitter::RawFitterError_t er
   };
 }
 
-int CaloRawFitter::getErrorNumber(CaloRawFitter::RawFitterError_t fiterror) {
-  switch (fiterror)
-  {
-  case RawFitterError_t::SAMPLE_UNINITIALIZED:
-    return 0;
-  case RawFitterError_t::FIT_ERROR:
-    return 1;
-  case RawFitterError_t::CHI2_ERROR:
-    return 2;
-  case RawFitterError_t::BUNCH_NOT_OK:
-    return 3;
+int CaloRawFitter::getErrorNumber(CaloRawFitter::RawFitterError_t fiterror)
+{
+  switch (fiterror) {
+    case RawFitterError_t::SAMPLE_UNINITIALIZED:
+      return 0;
+    case RawFitterError_t::FIT_ERROR:
+      return 1;
+    case RawFitterError_t::CHI2_ERROR:
+      return 2;
+    case RawFitterError_t::BUNCH_NOT_OK:
+      return 3;
   };
 }
 
