@@ -90,17 +90,17 @@ void RawFitterTESTMulti(const char* configfile = "")
             std::cout << "Fit done" << std::endl;
           } catch (o2::emcal::CaloRawFitter::RawFitterError_t& fiterror) {
             std::cerr << "Error processing raw fit: " << o2::emcal::CaloRawFitter::createErrorMessage(fiterror) << std::endl;
-            for(auto bunch : chan.getBunches()) {
+            for (auto bunch : chan.getBunches()) {
               std::cout << "Next bunch: " << bunch.getADC().size() << " entries" << std::endl;
               bool first = true;
-              for(auto en : bunch.getADC()) {
-                if(!first) {
+              for (auto en : bunch.getADC()) {
+                if (!first) {
                   std::cout << ", ";
                 }
                 std::cout << en;
                 first = false;
               }
-              std::cout <<  std::endl;
+              std::cout << std::endl;
             }
             std::cout << "Channel end" << std::endl;
           }
