@@ -148,7 +148,7 @@ void RawToCellConverterSpec::run(framework::ProcessingContext& ctx)
         // Use defaut subspecification 0
         mSubspecification = 0;
       }
-      LOG(INFO) << "Using output subspecification " << mSubspecification;
+      LOG(info) << "Using output subspecification " << mSubspecification;
     }
 
     o2::emcal::RawReaderMemory rawreader(framework::DataRefUtils::as<const char>(rawData));
