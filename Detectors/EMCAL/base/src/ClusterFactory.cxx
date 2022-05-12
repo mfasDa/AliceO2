@@ -26,7 +26,8 @@
 using namespace o2::emcal;
 
 template <typename InputType>
-ClusterFactory<InputType>::ClusterFactory() {
+ClusterFactory<InputType>::ClusterFactory()
+{
   mGeomPtr = o2::emcal::Geometry::GetInstance();
 }
 
@@ -57,7 +58,8 @@ o2::emcal::AnalysisCluster ClusterFactory<InputType>::buildCluster(int clusterIn
   if (clusterIndex >= mClustersContainer.size()) {
     throw ClusterRangeException(clusterIndex, mClustersContainer.size());
   }
-  if(!mGeomPtr) throw GeometryNotSetException();
+  if (!mGeomPtr)
+    throw GeometryNotSetException();
 
   o2::emcal::AnalysisCluster clusterAnalysis;
   clusterAnalysis.setID(clusterIndex);
