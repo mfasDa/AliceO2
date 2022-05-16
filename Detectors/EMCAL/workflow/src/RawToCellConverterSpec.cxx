@@ -645,7 +645,7 @@ o2::framework::DataProcessorSpec o2::emcal::reco_workflow::getRawToCellConverter
   } else if (subspecification == 146) {
     namesubspec += "EMCAL";
   } else {
-    LOG(ERROR) << "Wrong subspecification for FLP";
+    LOG(error) << "Wrong subspecification for FLP";
   }
 
   return o2::framework::DataProcessorSpec{namesubspec,
