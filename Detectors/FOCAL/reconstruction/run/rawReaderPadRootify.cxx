@@ -13,6 +13,7 @@
 /// \author Markus Fasel <markus.fasel@cern.ch>, Oak Ridge National Laboratory
 
 #include <bitset>
+#include <cstdlib>
 #include <iostream>
 #include <boost/program_options.hpp>
 #include <gsl/span>
@@ -356,4 +357,5 @@ int main(int argc, char** argv)
   for (auto& [nevents, nHBF] : nEvnetsHBF) {
     LOG(info) << "  " << nevents << " event(s)/HBF: " << nHBF << " HBFs ...";
   }
+  return EXIT_SUCCESS;
 }
