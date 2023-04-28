@@ -95,21 +95,21 @@ class Digitizer : public TObject
   const o2::dataformats::MCTruthContainer<o2::emcal::MCLabel>& getMCLabels() const { return mDigits.getMCLabels(); }
 
  private:
-  static constexpr int EMC_PHASES = 4;     ///< Number of phases
-  short mEventTimeOffset = 0;              ///< event time difference from trigger time (in number of bins)
-  short mPhase = 0;                        ///< event phase
-  UInt_t mROFrameMin = 0;                  ///< lowest RO frame of current digits
-  UInt_t mROFrameMax = 0;                  ///< highest RO frame of current digits
-  bool mSmearEnergy = true;                ///< do time and energy smearing
-  bool mSimulateTimeResponse = true;       ///< simulate time response
-  const SimParam* mSimParam = nullptr;     ///< SimParam object
+  static constexpr int EMC_PHASES = 4; ///< Number of phases
+  short mEventTimeOffset = 0;          ///< event time difference from trigger time (in number of bins)
+  short mPhase = 0;                    ///< event phase
+  UInt_t mROFrameMin = 0;              ///< lowest RO frame of current digits
+  UInt_t mROFrameMax = 0;              ///< highest RO frame of current digits
+  bool mSmearEnergy = true;            ///< do time and energy smearing
+  bool mSimulateTimeResponse = true;   ///< simulate time response
+  const SimParam* mSimParam = nullptr; ///< SimParam object
 
   std::vector<Digit> mTempDigitVector;     ///< temporary digit storage
   o2::emcal::DigitsWriteoutBuffer mDigits; ///< used to sort digits and labels by tower
 
-  TRandom3* mRandomGenerator = nullptr;    ///< random number generator
+  TRandom3* mRandomGenerator = nullptr; ///< random number generator
   std::array<std::array<double, constants::EMCAL_MAXTIMEBINS>, EMC_PHASES>
-    mAmplitudeInTimeBins;                  ///< template of the sampled time response function: amplitude of signal for each time bin (per phase)
+    mAmplitudeInTimeBins; ///< template of the sampled time response function: amplitude of signal for each time bin (per phase)
 
   std::unique_ptr<o2::utils::TreeStreamRedirector> mDebugStream = nullptr;
   bool mEnableDebugStreaming = false;
